@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Environment variables
+*.env
+
+# IDE
+.idea/
+.vscode/
+
+# Output & data
+output/
+records/
+*.txt
+*.csv
+
+# OS
+.DS_Store
+Thumbs.db

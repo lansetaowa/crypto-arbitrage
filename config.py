@@ -11,6 +11,11 @@ load_dotenv("binance_api.env")
 BINANCE_API_KEY = os.getenv('B_KEY')
 BINANCE_API_SECRET = os.getenv('B_SECRET')
 
+# load proxies
+load_dotenv('proxy.env')
+BINANCE_PROXY = os.getenv('BINANCE_PROXY')
+GATE_PROXY = os.getenv('GATE_PROXY')
+
 THRESHOLD = 0.003  # 套利阈值
 EXIT_THRESHOLD = 0.0001  # 平仓阈值
 TRADE_AMOUNT = 20  # 单笔交易金额

@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 from binance.client import Client
 from gate_api import FuturesApi, Configuration, ApiClient
+from config import *
 
 pd.set_option('display.max_columns', None)  # 显示所有列
 pd.set_option('display.max_rows', None)     # 显示所有行
@@ -25,8 +26,8 @@ class BinanceDataHandler:
         self.client = Client(api_key, api_secret,
                              requests_params={
                 'proxies': {
-                    'http': 'socks5://127.0.0.1:10808',
-                    'https': 'socks5://127.0.0.1:10808',
+                    'http': BINANCE_PROXY,
+                    'https': BINANCE_PROXY,
                     }
                 })
 
@@ -123,7 +124,7 @@ class GateDataHandler:
     def __init__(self, gate_key=None, gate_secret=None):
 
         self.config = Configuration(key=gate_key, secret=gate_secret)
-        self.config.proxy = "http://127.0.0.1:10808"
+        self.config.proxy = GATE_PROXY
 
         self.api_client = ApiClient(self.config)
         self.futures_api = FuturesApi(self.api_client)

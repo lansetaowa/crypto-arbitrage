@@ -8,6 +8,7 @@ from binance.client import Client
 
 from gate_api import FuturesApi, Configuration, ApiClient
 from gate_api.exceptions import ApiException
+from config import *
 
 class BFutureTrader:
 
@@ -16,8 +17,8 @@ class BFutureTrader:
         self.client = Client(api_key, api_secret,
                              requests_params={
                 'proxies': {
-                    'http': 'socks5://127.0.0.1:10808',
-                    'https': 'socks5://127.0.0.1:10808',
+                    'http': BINANCE_PROXY,
+                    'https': BINANCE_PROXY,
                     }
                 })
 
@@ -144,7 +145,7 @@ class GateFuturesTrader:
     def __init__(self, gate_key, gate_secret):
 
         self.config = Configuration(key=gate_key, secret=gate_secret)
-        self.config.proxy = "http://127.0.0.1:10808"
+        self.config.proxy = GATE_PROXY
 
         self.api_client = ApiClient(self.config)
         self.futures_api = FuturesApi(self.api_client)
