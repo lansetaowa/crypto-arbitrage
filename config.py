@@ -1,0 +1,32 @@
+from dotenv import load_dotenv
+import os
+
+# load Gateio api
+load_dotenv("gate_api.env")
+GATEIO_API_KEY = os.getenv('G_KEY')
+GATEIO_API_SECRET = os.getenv('G_SECRET')
+
+# load Binance api
+load_dotenv("binance_api.env")
+BINANCE_API_KEY = os.getenv('B_KEY')
+BINANCE_API_SECRET = os.getenv('B_SECRET')
+
+THRESHOLD = 0.003  # 套利阈值
+EXIT_THRESHOLD = 0.0001  # 平仓阈值
+TRADE_AMOUNT = 20  # 单笔交易金额
+SLEEP_TIME = 10  # 无套利机会时的等待时间（秒）
+LEVERAGE = 1  # 杠杆倍数
+SETTLE = "usdt"
+TIME_BUFFER = 150
+
+# # 添加 interval mismatch symbols 列表
+# def load_mismatch_symbols(file_path="output/mismatch_symbols.txt"):
+#     try:
+#         with open(file_path, "r") as f:
+#             return [line.strip() for line in f.readlines()]
+#     except FileNotFoundError:
+#         return []
+#
+# INTERVAL_MISMATCH_SYMBOLS = load_mismatch_symbols()
+# # print(INTERVAL_MISMATCH_SYMBOLS)
+
