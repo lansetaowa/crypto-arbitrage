@@ -321,7 +321,7 @@ if __name__ == '__main__':
     bdata_handler = BinanceDataHandler()
     gdata_handler = GateDataHandler()
 
-    ArbitrageUtils.update_interval_mismatch_list()
+    # ArbitrageUtils.update_interval_mismatch_list()
 
     # df = bdata_handler.bi_get_all_contract_status()
     # print(df['status'].value_counts())
