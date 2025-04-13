@@ -12,9 +12,9 @@ from config import *
 
 class BFutureTrader:
 
-    def __init__(self, api_key=None, api_secret=None):
+    def __init__(self, api_key=BINANCE_API_KEY, api_secret=BINANCE_API_SECRET):
 
-        self.client = Client(api_key, api_secret,
+        self.client = Client(api_key=api_key, api_secret=api_secret,
                              requests_params={
                 'proxies': {
                     'http': BINANCE_PROXY,
@@ -142,7 +142,7 @@ class BFutureTrader:
 
 class GateFuturesTrader:
 
-    def __init__(self, gate_key, gate_secret):
+    def __init__(self, gate_key=GATEIO_API_KEY, gate_secret=GATEIO_API_SECRET):
 
         self.config = Configuration(key=gate_key, secret=gate_secret)
         self.config.proxy = GATE_PROXY
@@ -271,45 +271,45 @@ class GateFuturesTrader:
             print(f"❌ 取消订单时出错: {e}")
 
 if __name__ == '__main__':
-    from dotenv import load_dotenv
-    import os
-
-    # load Gateio api
-    load_dotenv("gate_api.env")
-    GATEIO_API_KEY = os.getenv('G_KEY')
-    GATEIO_API_SECRET = os.getenv('G_SECRET')
-
-    # load Binance api
-    load_dotenv("binance_api.env")
-    BINANCE_API_KEY = os.getenv('B_KEY')
-    BINANCE_API_SECRET = os.getenv('B_SECRET')
+    # from dotenv import load_dotenv
+    # import os
     #
-    bfuture_trader = BFutureTrader(api_key=BINANCE_API_KEY, api_secret=BINANCE_API_SECRET)
+    # # load Gateio api
+    # load_dotenv("gate_api.env")
+    # GATEIO_API_KEY = os.getenv('G_KEY')
+    # GATEIO_API_SECRET = os.getenv('G_SECRET')
+    #
+    # # load Binance api
+    # load_dotenv("binance_api.env")
+    # BINANCE_API_KEY = os.getenv('B_KEY')
+    # BINANCE_API_SECRET = os.getenv('B_SECRET')
+    #
+    bfuture_trader = BFutureTrader()
     # print(bfuture_trader.set_leverage('BTCUSDT',1))
     # print(bfuture_trader.get_available_balance())
 
-    gfuture_trader = GateFuturesTrader(gate_key=GATEIO_API_KEY, gate_secret=GATEIO_API_SECRET)
+    gfuture_trader = GateFuturesTrader()
     # print(gfuture_trader.get_available_balance())
     # gfuture_trader.futures_api.update_position_leverage(
     #             settle="usdt",
     #             contract='ETH_USDT',
     #             leverage='2'  # 杠杆倍数为字符串类型
     #         )
+    # #
+    # # gfuture_trader.place_future_market_order('ETH_USDT', size=-1)
     #
-    # gfuture_trader.place_future_market_order('ETH_USDT', size=-1)
-
-    gate_positions = gfuture_trader.futures_api.list_positions(settle='usdt')
-    # print(gate_positions)
-    pos = [p for p in gate_positions if float(p.size) != 0]
-    print(pos)
-
-    print(gfuture_trader.futures_api.list_futures_orders(settle='usdt', status='finished'))
-
-    print(gfuture_trader.futures_api.list_futures_funding_rate_history(settle='usdt',contract='FUN_USDT'))
-
-    positions = bfuture_trader.client.futures_account()['positions']
-    active_positions = [p for p in positions if float(p.get("positionAmt", 0)) != 0]
-    print(active_positions)
+    # gate_positions = gfuture_trader.futures_api.list_positions(settle='usdt')
+    # # print(gate_positions)
+    # pos = [p for p in gate_positions if float(p.size) != 0]
+    # # print(pos)
+    #
+    # print(gfuture_trader.futures_api.list_futures_orders(settle='usdt', status='finished'))
+    #
+    # print(gfuture_trader.futures_api.list_futures_funding_rate_history(settle='usdt',contract='FUN_USDT'))
+    #
+    # positions = bfuture_trader.client.futures_account()['positions']
+    # active_positions = [p for p in positions if float(p.get("positionAmt", 0)) != 0]
+    # print(active_positions)
 
     print(bfuture_trader.client.futures_get_all_orders(symbol='FUNUSDT'))
 
