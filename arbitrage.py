@@ -192,7 +192,11 @@ def open_new_positions(filtered_fr, next_funding_time, now, bdata_handler, gdata
                 bi_order = bf_trader.place_market_long_order(symbol=s, quantity=bi_quantity) # binance开多
                 # 检查是否下单成功
                 if gate_order and bi_order:
-                    active_type1[s] = {'bi_qty': bi_quantity, 'gate_size': gate_size, 'funding_time': next_funding_time}
+                    active_type1[s] = {'bi_qty': bi_quantity,
+                                       'gate_size': gate_size,
+                                       'funding_time': next_funding_time,
+                                       'bi_entry_price': float(bi_order['avgPrice']),
+                                       'gate_entry_price': float(gate_order.fill_price)}
                     logging.info("[CONFIRM] Type1 open success %s", s)
                     record_trade(platform="Binance", order=bi_order)
                     record_trade(platform="GateIO", order=gate_order)
@@ -246,7 +250,11 @@ def open_new_positions(filtered_fr, next_funding_time, now, bdata_handler, gdata
                 bi_order = bf_trader.place_market_short_order(symbol=s, quantity=bi_quantity) # binance开空
                 # 检查是否下单成功
                 if gate_order and bi_order:
-                    active_type2[s] = {'bi_qty': bi_quantity, 'gate_size': gate_size, 'funding_time': next_funding_time}
+                    active_type2[s] = {'bi_qty': bi_quantity,
+                                       'gate_size': gate_size,
+                                       'funding_time': next_funding_time,
+                                       'bi_entry_price': float(bi_order['avgPrice']),
+                                       'gate_entry_price': float(gate_order.fill_price)}
                     logging.info("[CONFIRM] Type2 open success %s", s)
                     record_trade(platform="Binance", order=bi_order)
                     record_trade(platform="GateIO", order=gate_order)
