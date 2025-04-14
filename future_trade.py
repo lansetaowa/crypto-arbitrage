@@ -44,6 +44,8 @@ class BFutureTrader:
             print(f"❌ 获取 Binance 合约账户余额出错: {e}")
             return 0.0
 
+    # 获取深度
+
     # 限价单，开多
     def place_limit_long_order(self, symbol, quantity, order_price):
 
@@ -139,6 +141,49 @@ class BFutureTrader:
             print(f"❌ Error closing market short order: {e}")
             return None
 
+    # 限价单，平多
+    def close_limit_long_order(self, symbol, quantity, price):
+        try:
+            future_order = self.client.futures_create_order(
+                symbol=symbol,
+                side='SELL',
+                positionSide='LONG',
+                type='LIMIT',
+                timeInForce='GTC',
+                quantity=quantity,
+                price=str(price)
+            )
+            return future_order
+        except Exception as e:
+            print(f"❌ Error placing limit close long order on Binance: {e}")
+            return None
+
+    # 限价单，平空
+    def close_limit_short_order(self, symbol, quantity, price):
+        try:
+            future_order = self.client.futures_create_order(
+                symbol=symbol,
+                side='BUY',
+                positionSide='SHORT',
+                type='LIMIT',
+                timeInForce='GTC',
+                quantity=quantity,
+                price=str(price)
+            )
+            return future_order
+        except Exception as e:
+            print(f"❌ Error placing limit close short order on Binance: {e}")
+            return None
+
+    # 查询订单状态是否被fill
+    def check_order_filled(self, symbol, order_id):
+        try:
+            order = self.client.futures_get_order(symbol=symbol, orderId=order_id)
+            return order.get("status") == "FILLED"
+        except Exception as e:
+            print(f"❌ Error checking order status on Binance: {e}")
+            return False
+
 
 class GateFuturesTrader:
 
@@ -216,6 +261,35 @@ class GateFuturesTrader:
         except ApiException as e:
             print(f"❌ 下单时出错: {e}")
 
+    # PLACE a limit order to close position
+    def place_limit_close_order(self, symbol, price, direction):
+        try:
+            return self.futures_api.create_futures_order(
+                settle="usdt",
+                futures_order={
+                    "contract": symbol,
+                    "size": 0,
+                    "price": str(price),
+                    "tif": "gtc",
+                    "text": "t-api_limit_close",
+                    "reduce_only": True,
+                    "close": False,
+                    "auto_size": "close_long" if direction == 'long' else "close_short"
+                }
+            )
+        except ApiException as e:
+            print(f"❌ Gate 限价平仓下单失败: {e}")
+            return None
+
+    # 查询订单状态是否被fill
+    def check_order_filled(self, order_id):
+        try:
+            order = self.futures_api.get_futures_order("usdt", order_id)
+            return order.status == 'finished'
+        except ApiException as e:
+            print(f"❌ 查询Gate订单状态失败: {e}")
+            return False
+
     ##------------------------------------MARKET ORDERS----------------------------------------
     # PLACE a market long/short order
     # 开多:  size为正
@@ -239,7 +313,7 @@ class GateFuturesTrader:
             print(f"❌ 开多市价单时出错: {e}")
             return None
 
-    # place a market order to close position
+    # PLACE a market order to close position
     def close_future_market_order(self, symbol, auto_size=None):
         """
         auto_size: "close_long" or "close_short"
@@ -269,6 +343,7 @@ class GateFuturesTrader:
             self.futures_api.cancel_futures_order("usdt", order_id)
         except ApiException as e:
             print(f"❌ 取消订单时出错: {e}")
+
 
 if __name__ == '__main__':
     # from dotenv import load_dotenv

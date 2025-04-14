@@ -157,8 +157,8 @@ def open_new_positions(filtered_fr, next_funding_time, now, bdata_handler, gdata
     """
     global active_type1, active_type2
 
-    type1_list = list(filtered_fr[(filtered_fr['fr_diff'] > THRESHOLD) & (filtered_fr['abs_price_diff'] < 0.002)]['symbol'])
-    type2_list = list(filtered_fr[(filtered_fr['fr_diff'] < -THRESHOLD) & (filtered_fr['abs_price_diff'] < 0.002)]['symbol'])
+    type1_list = list(filtered_fr[(filtered_fr['fr_diff'] > THRESHOLD)]['symbol'])
+    type2_list = list(filtered_fr[(filtered_fr['fr_diff'] < -THRESHOLD)]['symbol'])
     logging.info("Type1 list length: %d; Type2 list length: %d", len(type1_list), len(type2_list))
 
     # 开Type1仓位：gate-binance 为正

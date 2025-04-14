@@ -8,14 +8,12 @@ def get_active_binance_positions(bf_trader):
     """从 Binance 获取当前持仓（非0仓位），返回列表（字典格式）。"""
     positions = bf_trader.client.futures_account().get('positions', [])
     active_positions = [p for p in positions if float(p.get("positionAmt", 0)) != 0]
-    logging.info("Binance: Found %d active positions", len(active_positions))
     return active_positions
 
 def get_active_gate_positions(gf_trader):
     """从 GateIO 获取当前持仓（非0仓位），返回列表（对象或字典格式）。"""
     gate_positions_raw = gf_trader.futures_api.list_positions(settle='usdt')
     active_positions = [p for p in gate_positions_raw if float(p.size) != 0]
-
     return active_positions
 
 def get_union_active_symbols(bin_positions, gate_positions):

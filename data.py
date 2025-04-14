@@ -113,11 +113,23 @@ class BinanceDataHandler:
 
                     df = pd.DataFrame(result)
                     df['interval_hour'] = df['interval_sec'] / 3600
+
+                    return df
             except Exception as e:
                 print(f"error getting funding rate for {symbol}: {e}")
                 continue
 
-        return df
+    # Binance上某合约的实时深度
+    def get_binance_orderbook(self, symbol, limit=5):
+        try:
+            orderbook = self.client.futures_order_book(symbol=symbol, limit=limit)
+            return {
+                'bids': [(float(price), float(qty)) for price, qty in orderbook['bids']],
+                'asks': [(float(price), float(qty)) for price, qty in orderbook['asks']]
+            }
+        except Exception as e:
+            print(f"❌ Error fetching Binance orderbook: {e}")
+            return None
 
 class GateDataHandler:
 
@@ -177,6 +189,20 @@ class GateDataHandler:
         df['interval_hour'] = df['interval_sec']/3600
         return df
 
+    # Gateio上某合约的实时深度
+    def get_gate_orderbook(self, symbol, limit=5):
+        try:
+            gate_symbol = symbol.replace("USDT", "_USDT")
+            book = self.futures_api.list_futures_order_book(settle="usdt", contract=gate_symbol, limit=limit)
+
+            return {
+                'bids': [(float(entry.p), float(entry.s)) for entry in book.bids],
+                'asks': [(float(entry.p), float(entry.s)) for entry in book.asks]
+            }
+        except Exception as e:
+            print(f"❌ Error fetching Gate.io orderbook: {e}")
+            return None
+
 class ArbitrageUtils:
 
     # 合并两个funding rate dataframe
@@ -189,7 +215,7 @@ class ArbitrageUtils:
             left_on='symbol_renamed', right_on='symbol'
         )
         merged_df['fr_diff'] = merged_df['gate_funding_rate'] - merged_df['lastFundingRate']
-        merged_df['abs_price_diff'] = np.abs((merged_df['markPrice'] - merged_df['mark_price']) / merged_df['mark_price'])
+        # merged_df['abs_price_diff'] = np.abs((merged_df['markPrice'] - merged_df['mark_price']) / merged_df['mark_price'])
         merged_df.sort_values(by='fr_diff', ascending=False, inplace=True)
 
         return merged_df
@@ -316,10 +342,67 @@ class ArbitrageUtils:
             print(f"❌ 计算价格差异率时出错: {e}")
             return None
 
+    # 基于两个平台的实时深度和开仓价格，计算最差pnl的情况
+    @staticmethod
+    def calculate_worst_case_pnl(entry_price_gate, entry_price_binance, trade_type,
+                                  orderbook_gate, orderbook_binance):
+        """
+        计算当前 orderbook 情况下的最差盈利情况（是否能不亏）。
+
+        :param entry_price_gate: Gate 开仓价格
+        :param entry_price_binance: Binance 开仓价格
+        :param trade_type: 'type1' or 'type2'
+        :param orderbook_gate: Gate 实时 orderbook dict，包含 'bids' 和 'asks'
+        :param orderbook_binance: Binance 实时 orderbook dict，包含 'bids' 和 'asks'
+        :return: normalized_pnl 盈亏比，例如 0.001 表示 0.1% 收益
+        """
+
+        if trade_type == 'type1':
+            # Gate 做空 → ask 平仓；Binance 做多 → bid 平仓
+            gate_exit_price = orderbook_gate['asks'][-1][0]
+            binance_exit_price = orderbook_binance['bids'][-1][0]
+
+            gate_pnl = entry_price_gate - gate_exit_price
+            binance_pnl = binance_exit_price - entry_price_binance
+            print(f"gate pnl is {gate_pnl}, binance pnl is {binance_pnl}")
+
+        elif trade_type == 'type2':
+            # Gate 做多 → bid 平仓；Binance 做空 → ask 平仓
+            gate_exit_price = orderbook_gate['bids'][-1][0]
+            binance_exit_price = orderbook_binance['asks'][-1][0]
+
+            gate_pnl = gate_exit_price - entry_price_gate
+            binance_pnl = entry_price_binance - binance_exit_price
+            print(f"gate pnl is {gate_pnl}, binance pnl is {binance_pnl}")
+
+        else:
+            raise ValueError("trade_type must be 'type1' or 'type2'")
+
+        # 返回合并盈亏占平均开仓价格的比例（近似为总收益率）
+        avg_entry = (entry_price_gate + entry_price_binance) / 2
+        total_pnl = gate_pnl + binance_pnl
+        normalized_pnl = total_pnl / avg_entry
+
+        return normalized_pnl
+
+
 if __name__ == '__main__':
 
     bdata_handler = BinanceDataHandler()
     gdata_handler = GateDataHandler()
+
+    bi_depth = bdata_handler.get_binance_orderbook(symbol='EDUUSDT')
+    print(bi_depth)
+
+    g_depth = gdata_handler.get_gate_orderbook(symbol='EDUUSDT')
+    print(g_depth)
+
+    pnl = ArbitrageUtils.calculate_worst_case_pnl(entry_price_gate=0.14109,
+                                                  entry_price_binance=0.1423,
+                                                  orderbook_gate=g_depth,
+                                                  orderbook_binance=bi_depth,
+                                                  trade_type='type1')
+    print(pnl)
 
     # ArbitrageUtils.update_interval_mismatch_list()
 

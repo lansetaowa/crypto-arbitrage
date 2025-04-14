@@ -178,7 +178,6 @@ class TradeAnalyzer(BFutureTrader, GateFuturesTrader):
     def add_pnl(self, df):
 
         df['pnl'] = df.apply(self.calculate_pnl, axis=1)
-
         return df
 
 if __name__ == '__main__':
