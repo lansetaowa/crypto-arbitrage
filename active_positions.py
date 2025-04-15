@@ -108,10 +108,12 @@ def reinitialize_active_positions(bf_trader, gf_trader):
         bin_order = get_recent_binance_order(bf_trader, symbol)
         bi_qty = float(bin_order.get("executedQty", 0))
         side = bin_order.get("positionSide")
+        bi_entry_price = float(bin_order.get("avgPrice", bin_order.get("price", 0)))
 
         # 查询 GateIO 最新订单
         gate_order = get_recent_gate_order(gf_trader, symbol)
         gate_size = float(gate_order.size)
+        gate_entry_price = float(gate_order.fill_price)
 
         # 查询 funding 时间
         bin_ft = get_binance_funding_time(bf_trader, symbol, bin_order)
@@ -126,14 +128,20 @@ def reinitialize_active_positions(bf_trader, gf_trader):
             active_type1[symbol] = {
                 'bi_qty': bi_qty,
                 'gate_size': gate_size,
-                'funding_time': funding_time
+                'funding_time': funding_time,
+                'bi_entry_price': bi_entry_price,
+                'gate_entry_price': gate_entry_price,
+                'trade_type': 'type1'
             }
 
         elif side == "SHORT" and gate_size > 0:
             active_type2[symbol] = {
                 'bi_qty': abs(bi_qty),
                 'gate_size': gate_size,
-                'funding_time': funding_time
+                'funding_time': funding_time,
+                'bi_entry_price': bi_entry_price,
+                'gate_entry_price': gate_entry_price,
+                'trade_type': 'type2'
             }
         else:
             print(f"{symbol} orders do not match expected hedge structure")
