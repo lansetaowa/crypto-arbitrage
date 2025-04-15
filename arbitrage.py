@@ -15,8 +15,11 @@ logging.basicConfig(
 )
 
 # 记录在套利操作中的交易对与下单信息
-active_type1 = {}  # gate空 + binance多，格式：{symbol: {'bi_qty': x, 'gate_size': xx, 'funding_time': datetime}}
-active_type2 = {}  # gate多 + binance空，格式：{symbol: {'bi_qty': x, 'gate_size': xx, 'funding_time': datetime}}
+# gate空 + binance多，格式：{symbol: {'bi_qty': x, 'gate_size': xx, 'funding_time': datetime, 'bi_entry_price': xx, 'gate_entry_price': xx}}
+active_type1 = {}
+# gate多 + binance空，格式：{symbol: {'bi_qty': x, 'gate_size': xx, 'funding_time': datetime, 'bi_entry_price': xx, 'gate_entry_price': xx}}
+active_type2 = {}
+
 
 def log_initialization():
     logging.info("Initializing data handlers and traders.")

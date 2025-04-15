@@ -262,7 +262,7 @@ class GateFuturesTrader:
             print(f"❌ 下单时出错: {e}")
 
     # PLACE a limit order to close position
-    def place_limit_close_order(self, symbol, price, direction):
+    def close_future_limit_order(self, symbol, price, direction):
         try:
             return self.futures_api.create_futures_order(
                 settle="usdt",

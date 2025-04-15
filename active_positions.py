@@ -131,7 +131,6 @@ def reinitialize_active_positions(bf_trader, gf_trader):
                 'funding_time': funding_time,
                 'bi_entry_price': bi_entry_price,
                 'gate_entry_price': gate_entry_price,
-                'trade_type': 'type1'
             }
 
         elif side == "SHORT" and gate_size > 0:
@@ -141,7 +140,6 @@ def reinitialize_active_positions(bf_trader, gf_trader):
                 'funding_time': funding_time,
                 'bi_entry_price': bi_entry_price,
                 'gate_entry_price': gate_entry_price,
-                'trade_type': 'type2'
             }
         else:
             print(f"{symbol} orders do not match expected hedge structure")
