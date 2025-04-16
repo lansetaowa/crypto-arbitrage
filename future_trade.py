@@ -179,11 +179,20 @@ class BFutureTrader:
     def check_order_filled(self, symbol, order_id):
         try:
             order = self.client.futures_get_order(symbol=symbol, orderId=order_id)
+            print(order)
             return order.get("status") == "FILLED"
         except Exception as e:
             print(f"❌ Error checking order status on Binance: {e}")
             return False
 
+    # 查询订单fill的价格
+    def check_fill_price(self, symbol, order_id):
+        try:
+            order = self.client.futures_get_order(symbol=symbol, orderId=order_id)
+            return order['avgPrice']
+        except Exception as e:
+            print(f"❌ Error checking order status on Binance: {e}")
+            return 0
 
 class GateFuturesTrader:
 
@@ -284,7 +293,7 @@ class GateFuturesTrader:
     # 查询订单状态是否被fill
     def check_order_filled(self, order_id):
         try:
-            order = self.futures_api.get_futures_order("usdt", order_id)
+            order = self.futures_api.get_futures_order("usdt", order_id=str(order_id))
             return order.status == 'finished'
         except ApiException as e:
             print(f"❌ 查询Gate订单状态失败: {e}")
@@ -346,32 +355,51 @@ class GateFuturesTrader:
 
 
 if __name__ == '__main__':
-    # from dotenv import load_dotenv
-    # import os
-    #
-    # # load Gateio api
-    # load_dotenv("gate_api.env")
-    # GATEIO_API_KEY = os.getenv('G_KEY')
-    # GATEIO_API_SECRET = os.getenv('G_SECRET')
-    #
-    # # load Binance api
-    # load_dotenv("binance_api.env")
-    # BINANCE_API_KEY = os.getenv('B_KEY')
-    # BINANCE_API_SECRET = os.getenv('B_SECRET')
-    #
+
     bfuture_trader = BFutureTrader()
-    # print(bfuture_trader.set_leverage('BTCUSDT',1))
+    # close_long = bfuture_trader.close_limit_long_order(symbol='ADAUSDT', quantity=30, price = 0.8)
+    # close_short = bfuture_trader.close_limit_short_order(symbol='ADAUSDT', quantity=30, price = 0.5)
+    #
+    # print('close long---------------')
+    # print(close_long)
+    # print('close short---------------')
+    # print(close_short)
+    # print(bfuture_trader.check_order_filled(symbol='ADAUSDT', order_id=53130156249))
+
+    # print(bfuture_trader.set_leverage('ADAUSDT',1))
     # print(bfuture_trader.get_available_balance())
+    # long_order = bfuture_trader.place_market_long_order(symbol='ADAUSDT', quantity=30)
+    # short_order = bfuture_trader.place_market_short_order(symbol='ADAUSDT', quantity=30)
+    # print("long order --------------")
+    # print(long_order)
+    # print("short order --------------")
+    # print(short_order)
+
+    # print(bfuture_trader.check_filled_price(symbol='ADAUSDT', order_id=53130156110))
 
     gfuture_trader = GateFuturesTrader()
+
+    # gfuture_trader.close_future_limit_order(symbol='ADA_USDT', price=0.8, direction='long')
+    # gfuture_trader.close_future_limit_order(symbol='ADA_USDT', price=0.5, direction='short')
+
     # print(gfuture_trader.get_available_balance())
     # gfuture_trader.futures_api.update_position_leverage(
     #             settle="usdt",
-    #             contract='ETH_USDT',
-    #             leverage='2'  # 杠杆倍数为字符串类型
+    #             contract='ADA_USDT',
+    #             leverage=1  # 杠杆倍数为字符串类型
     #         )
+    # long_order = gfuture_trader.place_future_market_order('ADA_USDT', size=3)
+    # short_order = gfuture_trader.place_future_market_order('ADA_USDT', size=-3)
+    #
+    # print('long order -----------')
+    # print(long_order)
+    # print('short order ----------')
+    # print(short_order)
+
+    # print(gfuture_trader.check_order_filled(order_id='5066550085564938'))
+
     # #
-    # # gfuture_trader.place_future_market_order('ETH_USDT', size=-1)
+    # gfuture_trader.place_future_market_order('ETH_USDT', size=-1)
     #
     # gate_positions = gfuture_trader.futures_api.list_positions(settle='usdt')
     # # print(gate_positions)
@@ -386,7 +414,7 @@ if __name__ == '__main__':
     # active_positions = [p for p in positions if float(p.get("positionAmt", 0)) != 0]
     # print(active_positions)
 
-    print(bfuture_trader.client.futures_get_all_orders(symbol='FUNUSDT'))
+    # print(bfuture_trader.client.futures_get_all_orders(symbol='FUNUSDT'))
 
 
 

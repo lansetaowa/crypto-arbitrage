@@ -391,18 +391,18 @@ if __name__ == '__main__':
     bdata_handler = BinanceDataHandler()
     gdata_handler = GateDataHandler()
 
-    bi_depth = bdata_handler.get_binance_orderbook(symbol='EDUUSDT')
-    print(bi_depth)
-
-    g_depth = gdata_handler.get_gate_orderbook(symbol='EDUUSDT')
-    print(g_depth)
-
-    pnl = ArbitrageUtils.calculate_worst_case_pnl(entry_price_gate=0.14109,
-                                                  entry_price_binance=0.1423,
-                                                  orderbook_gate=g_depth,
-                                                  orderbook_binance=bi_depth,
-                                                  trade_type='type1')
-    print(pnl)
+    # bi_depth = bdata_handler.get_binance_orderbook(symbol='EDUUSDT')
+    # print(bi_depth)
+    #
+    # g_depth = gdata_handler.get_gate_orderbook(symbol='EDUUSDT')
+    # print(g_depth)
+    #
+    # pnl = ArbitrageUtils.calculate_worst_case_pnl(entry_price_gate=0.14109,
+    #                                               entry_price_binance=0.1423,
+    #                                               orderbook_gate=g_depth,
+    #                                               orderbook_binance=bi_depth,
+    #                                               trade_type='type1')
+    # print(pnl)
 
     # ArbitrageUtils.update_interval_mismatch_list()
 
@@ -416,12 +416,12 @@ if __name__ == '__main__':
     #
     # amount = 1000
     # symbol = 'BTCUSDT'
-
-    # gate_size, bi_quantity = ArbitrageUtils.calculate_trade_quantity(amount=200,
-    #                                                                  symbol='SAFEUSDT',
-    #                                                                  binance_handler=bdata_handler,
-    #                                                                  gate_handler=gdata_handler)
-    # print(f"Gate Size: {gate_size}, Binance Quantity: {bi_quantity}")
+    #
+    gate_size, bi_quantity = ArbitrageUtils.calculate_trade_quantity(amount=20,
+                                                                     symbol='ADAUSDT',
+                                                                     binance_handler=bdata_handler,
+                                                                     gate_handler=gdata_handler)
+    print(f"Gate Size: {gate_size}, Binance Quantity: {bi_quantity}")
     #
     # bi_df = bdata_handler.bi_get_funding_rates()
     # bi_df.to_csv('binance_fr.csv')

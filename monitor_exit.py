@@ -55,8 +55,8 @@ def monitor_exit_loop(bdata_handler, gdata_handler, bf_trader, gf_trader, active
                     gate_best_ask = gdata_handler.get_gate_orderbook(symbol)['asks'][0][0]
                     gate_close_order = gf_trader.close_future_limit_order(
                         symbol=symbol.replace("USDT", "_USDT"),
-                        quantity=record['gate_size'],
-                        price=gate_best_ask
+                        price=gate_best_ask,
+                        direction='short'
                     )
                     binance_close_order = bf_trader.close_limit_long_order(
                         symbol=symbol,
@@ -69,8 +69,8 @@ def monitor_exit_loop(bdata_handler, gdata_handler, bf_trader, gf_trader, active
                     gate_best_bid = gdata_handler.get_gate_orderbook(symbol)['bids'][0][0]
                     gate_close_order = gf_trader.close_future_limit_order(
                         symbol=symbol.replace("USDT", "_USDT"),
-                        quantity=record['gate_size'],
-                        price=gate_best_bid
+                        price=gate_best_bid,
+                        direction='long'
                     )
                     binance_close_order = bf_trader.close_limit_short_order(
                         symbol=symbol,

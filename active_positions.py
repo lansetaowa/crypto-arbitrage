@@ -30,9 +30,10 @@ def get_recent_binance_order(bf_trader, symbol):
     查询 Binance 某 symbol 最新订单（假设返回列表，取最后一笔）。
     返回订单字典，包含下单数量、side、订单时间等。
     """
-    orders = bf_trader.client.futures_get_all_orders(symbol=symbol, limit=1)
-    if orders:
-        order = orders[-1] # 返回列表中最后一笔为最新
+    orders = bf_trader.client.futures_get_all_orders(symbol=symbol, limit=20)
+    filled_orders = [order for order in orders if order.get("status") == "FILLED"]
+    if filled_orders:
+        order = filled_orders[-1] # 返回列表中最后一笔为最新
         return order
     else:
         return None
@@ -165,15 +166,15 @@ if __name__ == '__main__':
     bfuture_trader = BFutureTrader(api_key=BINANCE_API_KEY, api_secret=BINANCE_API_SECRET)
     gfuture_trader = GateFuturesTrader(gate_key=GATEIO_API_KEY, gate_secret=GATEIO_API_SECRET)
     #
-    # g_order = get_recent_gate_order(gfuture_trader, 'FUNUSDT')
-    # print(g_order)
-    # print(pd.to_datetime(g_order.create_time, unit='s'))
-    # print(g_order.size)
-    # #
-    # b_order = get_recent_binance_order(bfuture_trader, 'FUNUSDT')
-    # print(b_order)
-    # print(pd.to_datetime(b_order['time'], unit='ms'))
-    # print(b_order['positionSide'])
+    g_order = get_recent_gate_order(gfuture_trader, 'ADAUSDT')
+    print(g_order)
+    print(pd.to_datetime(g_order.create_time, unit='s'))
+    print(g_order.size)
+    #
+    b_order = get_recent_binance_order(bfuture_trader, 'ADAUSDT')
+    print(b_order)
+    print(pd.to_datetime(b_order['time'], unit='ms'))
+    print(b_order['positionSide'])
     # #
     # b_funding_time = get_binance_funding_time(bfuture_trader, 'FUNUSDT', order=b_order)
     # print(b_funding_time)
@@ -181,4 +182,4 @@ if __name__ == '__main__':
     # g_funding_time = get_gate_funding_time(gfuture_trader, 'FUN_USDT', g_order)
     # print(g_funding_time)
 
-    # print(reinitialize_active_positions(bfuture_trader, gfuture_trader))
+    print(reinitialize_active_positions(bfuture_trader, gfuture_trader))
