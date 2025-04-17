@@ -200,7 +200,8 @@ def open_new_positions(filtered_fr, next_funding_time, now, bdata_handler, gdata
                                        'gate_size': gate_size,
                                        'funding_time': next_funding_time,
                                        'bi_entry_price': bi_entry_price,
-                                       'gate_entry_price': float(gate_order.fill_price)}
+                                       'gate_entry_price': float(gate_order.fill_price),
+                                       'trade_type': 'type1'}
                     logging.info("[CONFIRM] Type1 open success %s", s)
                     record_trade(platform="Binance", order=bi_order)
                     record_trade(platform="GateIO", order=gate_order)
@@ -259,7 +260,8 @@ def open_new_positions(filtered_fr, next_funding_time, now, bdata_handler, gdata
                                        'gate_size': gate_size,
                                        'funding_time': next_funding_time,
                                        'bi_entry_price': bi_entry_price,
-                                       'gate_entry_price': float(gate_order.fill_price)}
+                                       'gate_entry_price': float(gate_order.fill_price),
+                                       'trade_type': 'type2'}
                     logging.info("[CONFIRM] Type2 open success %s", s)
                     record_trade(platform="Binance", order=bi_order)
                     record_trade(platform="GateIO", order=gate_order)

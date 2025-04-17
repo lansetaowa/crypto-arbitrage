@@ -44,8 +44,6 @@ class BFutureTrader:
             print(f"❌ 获取 Binance 合约账户余额出错: {e}")
             return 0.0
 
-    # 获取深度
-
     # 限价单，开多
     def place_limit_long_order(self, symbol, quantity, order_price):
 
@@ -369,7 +367,7 @@ if __name__ == '__main__':
     # print(bfuture_trader.set_leverage('ADAUSDT',1))
     # print(bfuture_trader.get_available_balance())
     # long_order = bfuture_trader.place_market_long_order(symbol='ADAUSDT', quantity=30)
-    # short_order = bfuture_trader.place_market_short_order(symbol='ADAUSDT', quantity=30)
+    short_order = bfuture_trader.place_market_short_order(symbol='ADAUSDT', quantity=30)
     # print("long order --------------")
     # print(long_order)
     # print("short order --------------")
@@ -388,7 +386,7 @@ if __name__ == '__main__':
     #             contract='ADA_USDT',
     #             leverage=1  # 杠杆倍数为字符串类型
     #         )
-    # long_order = gfuture_trader.place_future_market_order('ADA_USDT', size=3)
+    long_order = gfuture_trader.place_future_market_order('ADA_USDT', size=3)
     # short_order = gfuture_trader.place_future_market_order('ADA_USDT', size=-3)
     #
     # print('long order -----------')

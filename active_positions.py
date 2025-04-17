@@ -132,6 +132,7 @@ def reinitialize_active_positions(bf_trader, gf_trader):
                 'funding_time': funding_time,
                 'bi_entry_price': bi_entry_price,
                 'gate_entry_price': gate_entry_price,
+                'trade_type': 'type1'
             }
 
         elif side == "SHORT" and gate_size > 0:
@@ -141,6 +142,7 @@ def reinitialize_active_positions(bf_trader, gf_trader):
                 'funding_time': funding_time,
                 'bi_entry_price': bi_entry_price,
                 'gate_entry_price': gate_entry_price,
+                'trade_type': 'type2'
             }
         else:
             print(f"{symbol} orders do not match expected hedge structure")
@@ -166,15 +168,15 @@ if __name__ == '__main__':
     bfuture_trader = BFutureTrader(api_key=BINANCE_API_KEY, api_secret=BINANCE_API_SECRET)
     gfuture_trader = GateFuturesTrader(gate_key=GATEIO_API_KEY, gate_secret=GATEIO_API_SECRET)
     #
-    g_order = get_recent_gate_order(gfuture_trader, 'ADAUSDT')
-    print(g_order)
-    print(pd.to_datetime(g_order.create_time, unit='s'))
-    print(g_order.size)
-    #
-    b_order = get_recent_binance_order(bfuture_trader, 'ADAUSDT')
-    print(b_order)
-    print(pd.to_datetime(b_order['time'], unit='ms'))
-    print(b_order['positionSide'])
+    # g_order = get_recent_gate_order(gfuture_trader, 'ADAUSDT')
+    # print(g_order)
+    # print(pd.to_datetime(g_order.create_time, unit='s'))
+    # print(g_order.size)
+    # #
+    # b_order = get_recent_binance_order(bfuture_trader, 'ADAUSDT')
+    # print(b_order)
+    # print(pd.to_datetime(b_order['time'], unit='ms'))
+    # print(b_order['positionSide'])
     # #
     # b_funding_time = get_binance_funding_time(bfuture_trader, 'FUNUSDT', order=b_order)
     # print(b_funding_time)
