@@ -2,8 +2,11 @@
 This module monitors depth data and captures good moments and prices to close positions.
 """
 import time
-import logging
 from data import BinanceDataHandler, GateDataHandler, ArbitrageUtils
+from config import *
+import threading
+
+active_type_lock = threading.Lock()
 
 # 根据当前订单簿和持仓记录判断最差盈亏情况
 def evaluate_exit_profit(symbol, active_record, bdata_handler, gdata_handler):
@@ -48,7 +51,7 @@ def monitor_limit_order(bf_trader, gf_trader, symbol, binance_order, gate_order,
 
 # 主循环监控函数
 def monitor_exit_loop(bdata_handler, gdata_handler, bf_trader, gf_trader, active_type_dict,
-                      profit_threshold=0.001, exit_timeout=120, poll_interval=5):
+                      profit_threshold=MONITOR_PROFIT_THRESHOLD, exit_timeout=MONITOR_EXIT_TIMEOUT, poll_interval=MONITOR_POLL_INTERVAL):
     """
     :param active_type_dict: active_type1 或 active_type2 字典，包含所有持仓记录
     :param profit_threshold: 当最差盈亏比达到该阈值时，尝试平仓（例如 0.1% 收益）
@@ -56,6 +59,11 @@ def monitor_exit_loop(bdata_handler, gdata_handler, bf_trader, gf_trader, active
     :param poll_interval: 监控轮询间隔
     """
     while True:
+        if not active_type_dict:
+            print("[MONITOR] 当前无持仓，等待新仓位出现...")
+            time.sleep(poll_interval)
+            continue
+
         for symbol, record in list(active_type_dict.items()):
             pnl = evaluate_exit_profit(symbol, record, bdata_handler, gdata_handler)
             if pnl is None:
@@ -65,7 +73,7 @@ def monitor_exit_loop(bdata_handler, gdata_handler, bf_trader, gf_trader, active
             print(f"[MONITOR] {symbol} 当前worst-case pnl: {pnl:.5f}")
 
             # 满足条件（盈利超过阈值时）尝试平仓
-            if pnl >= profit_threshold or pnl <= -profit_threshold:
+            if pnl >= profit_threshold:
                 print(f"[EXIT] {symbol} 达到平仓条件，尝试以限价单平仓")
 
                 trade_type = record.get('trade_type')
@@ -78,8 +86,8 @@ def monitor_exit_loop(bdata_handler, gdata_handler, bf_trader, gf_trader, active
                     gate_best_ask = gdata_handler.get_gate_orderbook(symbol)['asks'][0][0]
                     gate_close_order = gf_trader.close_future_limit_order(symbol=gate_symbol, price=gate_best_ask, direction='short')
                     binance_close_order = bf_trader.close_limit_long_order(symbol=symbol, quantity=record['bi_qty'], price=bin_best_bid)
-                    print(gate_close_order)
-                    print(binance_close_order)
+                    # print(gate_close_order)
+                    # print(binance_close_order)
                     if gate_close_order and binance_close_order:
                         print(f'[EXIT] {symbol} type1 平仓限价单下单成功')
                 elif trade_type == 'type2':
@@ -126,8 +134,10 @@ def monitor_exit_loop(bdata_handler, gdata_handler, bf_trader, gf_trader, active
                     print(f"[EXIT] {symbol} 限价单完全成交，无需补救")
 
                 # 无论何种方式平仓成功后，从 active 持仓中剔除
-                del active_type_dict[symbol]
-                print(active_type_dict)
+                with active_type_lock:
+                    if symbol in active_type_dict:
+                        del active_type_dict[symbol]
+                        print(f"[MONITOR] 已安全删除持仓 {symbol}")
 
         time.sleep(poll_interval)
 
