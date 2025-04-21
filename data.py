@@ -48,6 +48,16 @@ class BinanceDataHandler:
 
         return df
 
+    # Binance单个合约的实时funding rate
+    def get_funding_rate(self, symbol):
+        try:
+            symbol_info = self.client.futures_mark_price(symbol=symbol)
+            return symbol_info['lastFundingRate']
+        except Exception as e:
+            print(f"[Binance FR] 获取 {symbol} 资金费率失败: {e}")
+            return 0.0001
+
+
     # Binance上获取某个合约的实时价格
     def bi_get_price(self, symbol='BTCUSDT'):
         try:
@@ -160,6 +170,15 @@ class GateDataHandler:
         df.sort_values(by="gate_funding_rate", ascending=False, inplace=True)
 
         return df
+
+    # Gateio单个合约的实时funding rate
+    def get_funding_rate(self, symbol):
+        try:
+            info = self.futures_api.get_futures_contract(settle='usdt', contract=symbol)
+            return info.funding_rate
+        except Exception as e:
+            print(f"[Gate FR] 获取 {symbol} 资金费率失败: {e}")
+            return 0.0001
 
     # Gateio获取单个合约规格
     def gate_get_contract_info(self, contract_name='BTC_USDT'):
@@ -391,6 +410,9 @@ if __name__ == '__main__':
     bdata_handler = BinanceDataHandler()
     gdata_handler = GateDataHandler()
 
+    print(bdata_handler.get_funding_rate('ETHUSDT'))
+    print(gdata_handler.get_funding_rate('ETH_USDT'))
+
     # bi_depth = bdata_handler.get_binance_orderbook(symbol='EDUUSDT')
     # print(bi_depth)
     #
@@ -417,11 +439,11 @@ if __name__ == '__main__':
     # amount = 1000
     # symbol = 'BTCUSDT'
     #
-    gate_size, bi_quantity = ArbitrageUtils.calculate_trade_quantity(amount=20,
-                                                                     symbol='ADAUSDT',
-                                                                     binance_handler=bdata_handler,
-                                                                     gate_handler=gdata_handler)
-    print(f"Gate Size: {gate_size}, Binance Quantity: {bi_quantity}")
+    # gate_size, bi_quantity = ArbitrageUtils.calculate_trade_quantity(amount=20,
+    #                                                                  symbol='ADAUSDT',
+    #                                                                  binance_handler=bdata_handler,
+    #                                                                  gate_handler=gdata_handler)
+    # print(f"Gate Size: {gate_size}, Binance Quantity: {bi_quantity}")
     #
     # bi_df = bdata_handler.bi_get_funding_rates()
     # bi_df.to_csv('binance_fr.csv')
