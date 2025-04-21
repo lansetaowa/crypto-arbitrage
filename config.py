@@ -24,9 +24,9 @@ LEVERAGE = 1  # 杠杆倍数
 SETTLE = "usdt"
 TIME_BUFFER = 150
 
-MONITOR_PROFIT_THRESHOLD = 0.01
-MONITOR_EXIT_TIMEOUT = 1800
-MONITOR_POLL_INTERVAL = 20
+MONITOR_PROFIT_THRESHOLD = 0.0002 # 0.02%
+MONITOR_EXIT_TIMEOUT = 4*60*60
+MONITOR_POLL_INTERVAL = 30
 
 # # 添加 interval mismatch symbols 列表
 # def load_mismatch_symbols(file_path="output/mismatch_symbols.txt"):

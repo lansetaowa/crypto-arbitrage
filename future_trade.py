@@ -355,7 +355,7 @@ class GateFuturesTrader:
 if __name__ == '__main__':
 
     bfuture_trader = BFutureTrader()
-    # close_long = bfuture_trader.close_limit_long_order(symbol='ADAUSDT', quantity=30, price = 0.8)
+    # close_long = bfuture_trader.close_limit_long_order(symbol='NKNUSDT', quantity=490, price = 0.04423)
     # close_short = bfuture_trader.close_limit_short_order(symbol='ADAUSDT', quantity=30, price = 0.5)
     #
     # print('close long---------------')
@@ -367,7 +367,7 @@ if __name__ == '__main__':
     # print(bfuture_trader.set_leverage('ADAUSDT',1))
     # print(bfuture_trader.get_available_balance())
     # long_order = bfuture_trader.place_market_long_order(symbol='ADAUSDT', quantity=30)
-    short_order = bfuture_trader.place_market_short_order(symbol='ADAUSDT', quantity=30)
+    # short_order = bfuture_trader.place_market_short_order(symbol='ADAUSDT', quantity=30)
     # print("long order --------------")
     # print(long_order)
     # print("short order --------------")
@@ -378,7 +378,7 @@ if __name__ == '__main__':
     gfuture_trader = GateFuturesTrader()
 
     # gfuture_trader.close_future_limit_order(symbol='ADA_USDT', price=0.8, direction='long')
-    # gfuture_trader.close_future_limit_order(symbol='ADA_USDT', price=0.5, direction='short')
+    # gfuture_trader.close_future_limit_order(symbol='NKN_USDT', price=0.04374, direction='short')
 
     # print(gfuture_trader.get_available_balance())
     # gfuture_trader.futures_api.update_position_leverage(
