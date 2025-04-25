@@ -34,7 +34,7 @@ class BinanceDataHandler:
     # Binance所有合约的实时funding rate，以及下次funding生效时间
     def bi_get_funding_rates(self):
 
-        # Convert to DataFrame
+        # Get funding rate
         df = pd.DataFrame(self.client.futures_mark_price())
         df = df[['symbol','markPrice','lastFundingRate','nextFundingTime','time']]
 
@@ -42,6 +42,11 @@ class BinanceDataHandler:
         df['markPrice'] = df['markPrice'].astype(float)
         df['nextFundingTime'] = pd.to_datetime(df['nextFundingTime'], unit='ms')
         df['time'] = pd.to_datetime(df['time'], unit='ms')
+
+        # Get status and filter for only TRADING
+        contract_status = self.bi_get_all_contract_status()  # 包含 status 信息
+        df = df.merge(contract_status[['symbol', 'status']], on='symbol', how='left')
+        df = df[df['status'] == 'TRADING']
 
         # Sort by funding rate (descending)
         df.sort_values(by="lastFundingRate", ascending=False, inplace=True)
@@ -140,6 +145,7 @@ class BinanceDataHandler:
         except Exception as e:
             print(f"❌ Error fetching Binance orderbook: {e}")
             return None
+
 
 class GateDataHandler:
 
@@ -410,8 +416,16 @@ if __name__ == '__main__':
     bdata_handler = BinanceDataHandler()
     gdata_handler = GateDataHandler()
 
-    print(bdata_handler.get_funding_rate('ETHUSDT'))
-    print(gdata_handler.get_funding_rate('ETH_USDT'))
+    # info = bdata_handler.bi_get_contract_info('LPTUSDT')
+    # tick = info['tick_size']
+    # print(tick)
+    #
+    # price = 5.126
+    # print(round(price/tick)*tick)
+
+    # df = bdata_handler.bi_get_funding_rates()
+    # print(df['status'].value_counts())
+    # print(gdata_handler.get_funding_rate('ETH_USDT'))
 
     # bi_depth = bdata_handler.get_binance_orderbook(symbol='EDUUSDT')
     # print(bi_depth)

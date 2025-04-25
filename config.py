@@ -17,16 +17,16 @@ BINANCE_PROXY = os.getenv('BINANCE_PROXY')
 GATE_PROXY = os.getenv('GATE_PROXY')
 
 THRESHOLD = 0.003  # 套利阈值
-EXIT_THRESHOLD = 0.0001  # 平仓阈值
 TRADE_AMOUNT = 20  # 单笔交易金额
 SLEEP_TIME = 10  # 无套利机会时的等待时间（秒）
 LEVERAGE = 1  # 杠杆倍数
 SETTLE = "usdt"
 TIME_BUFFER = 150
+LOOP_INTERVAL = 120
 
 MONITOR_PROFIT_THRESHOLD = 0.0002 # 0.02%
-MONITOR_EXIT_TIMEOUT = 4*60*60
-MONITOR_POLL_INTERVAL = 30
+MONITOR_EXIT_TIMEOUT = 2*60*60
+MONITOR_POLL_INTERVAL = 60
 
 # # 添加 interval mismatch symbols 列表
 # def load_mismatch_symbols(file_path="output/mismatch_symbols.txt"):

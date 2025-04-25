@@ -386,7 +386,7 @@ if __name__ == '__main__':
     #             contract='ADA_USDT',
     #             leverage=1  # 杠杆倍数为字符串类型
     #         )
-    long_order = gfuture_trader.place_future_market_order('ADA_USDT', size=3)
+    # long_order = gfuture_trader.place_future_market_order('ADA_USDT', size=3)
     # short_order = gfuture_trader.place_future_market_order('ADA_USDT', size=-3)
     #
     # print('long order -----------')
