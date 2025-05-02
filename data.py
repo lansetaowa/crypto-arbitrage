@@ -10,6 +10,7 @@
 
 import pandas as pd
 import numpy as np
+import math
 from binance.client import Client
 from gate_api import FuturesApi, Configuration, ApiClient
 from config import *
@@ -410,11 +411,38 @@ class ArbitrageUtils:
 
         return normalized_pnl
 
+    # 币安，根据tick_size，round价格至精确的小数点后位数
+    @staticmethod
+    def adjust_price_to_tick(price: float, tick_size: float) -> float:
+        """根据tick_size调整价格精度，防止浮点数误差"""
+        if tick_size <= 0:
+            raise ValueError("tick_size must be positive")
+        precision = max(0, -int(round(math.log10(tick_size))))
+        return round(price, precision)
+
 
 if __name__ == '__main__':
 
     bdata_handler = BinanceDataHandler()
     gdata_handler = GateDataHandler()
+
+    gate_df = gdata_handler.gate_get_funding_rates()
+    print(gate_df.tail())
+    print(gate_df.head())
+
+    bi_df = bdata_handler.bi_get_funding_rates()
+    print(bi_df.tail())
+    print(bi_df.head())
+
+    merge_df = ArbitrageUtils.merge_funding_rates(bi_df, gate_df)
+    print(merge_df.head())
+    print(merge_df.tail())
+
+    # ob = bdata_handler.get_binance_orderbook('BTCUSDT')
+    # print(ob)
+    # print(ob['bids'][0][0])
+
+    # print(ArbitrageUtils.adjust_price_to_tick(0.15723423532, 0.001))
 
     # info = bdata_handler.bi_get_contract_info('LPTUSDT')
     # tick = info['tick_size']

@@ -173,11 +173,18 @@ class BFutureTrader:
             print(f"❌ Error placing limit close short order on Binance: {e}")
             return None
 
+    # 取消挂单
+    def cancel_futures_limit_order(self, symbol, order_id):
+        try:
+            self.client.futures_cancel_order(symbol=symbol, orderId=order_id)
+        except Exception as e:
+            print(f"❌ Binance取消订单时出错: {e}")
+
     # 查询订单状态是否被fill
     def check_order_filled(self, symbol, order_id):
         try:
             order = self.client.futures_get_order(symbol=symbol, orderId=order_id)
-            print(order)
+            # print(order)
             return order.get("status") == "FILLED"
         except Exception as e:
             print(f"❌ Error checking order status on Binance: {e}")
@@ -292,6 +299,7 @@ class GateFuturesTrader:
     def check_order_filled(self, order_id):
         try:
             order = self.futures_api.get_futures_order("usdt", order_id=str(order_id))
+            # print(order)
             return order.status == 'finished'
         except ApiException as e:
             print(f"❌ 查询Gate订单状态失败: {e}")
@@ -349,12 +357,22 @@ class GateFuturesTrader:
         try:
             self.futures_api.cancel_futures_order("usdt", order_id)
         except ApiException as e:
-            print(f"❌ 取消订单时出错: {e}")
+            print(f"❌ Gate取消订单时出错: {e}")
 
 
 if __name__ == '__main__':
 
     bfuture_trader = BFutureTrader()
+
+    # trades = bfuture_trader.client.futures_account_trades(symbol='ALPACAUSDT', limit=10)
+    # print(trades)
+
+    # order = bfuture_trader.place_limit_long_order(symbol='BTCUSDT', quantity=0.004, order_price=30000)
+    # print(order)
+
+    # cancel = bfuture_trader.cancel_futures_limit_order(symbol='BTCUSDT', order_id=670217956833)
+    # print(cancel)
+
     # close_long = bfuture_trader.close_limit_long_order(symbol='NKNUSDT', quantity=490, price = 0.04423)
     # close_short = bfuture_trader.close_limit_short_order(symbol='ADAUSDT', quantity=30, price = 0.5)
     #

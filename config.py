@@ -16,17 +16,17 @@ load_dotenv('proxy.env')
 BINANCE_PROXY = os.getenv('BINANCE_PROXY')
 GATE_PROXY = os.getenv('GATE_PROXY')
 
-THRESHOLD = 0.003  # 套利阈值
-TRADE_AMOUNT = 20  # 单笔交易金额
-SLEEP_TIME = 10  # 无套利机会时的等待时间（秒）
+THRESHOLD = 0.0005  # 套利阈值
+TRADE_AMOUNT = 20  # 单边交易金额
 LEVERAGE = 1  # 杠杆倍数
 SETTLE = "usdt"
-TIME_BUFFER = 150
-LOOP_INTERVAL = 120
+TIME_BUFFER = 90 # 里资金费率生效时间还剩多久开始套利流程
+LOOP_INTERVAL = 120 # 无套利机会时的等待时间（秒）
 
-MONITOR_PROFIT_THRESHOLD = 0.0002 # 0.02%
-MONITOR_EXIT_TIMEOUT = 2*60*60
-MONITOR_POLL_INTERVAL = 60
+MONITOR_PROFIT_THRESHOLD = 0.0005 # pnl判断平仓的阈值
+MONITOR_EXIT_TIMEOUT = 5*60 # 平仓的限价单多久没有fill就强制平仓
+MONITOR_FILL_INTERVAL = 25
+
 
 # # 添加 interval mismatch symbols 列表
 # def load_mismatch_symbols(file_path="output/mismatch_symbols.txt"):

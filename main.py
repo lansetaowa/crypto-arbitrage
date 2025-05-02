@@ -33,12 +33,16 @@ if __name__ == "__main__":
                     success = open_new_position(symbol, fr_diff, next_funding_time, bdata_handler, gdata_handler, bf_trader, gf_trader)
                     if success:
                         state = STATE_WAITING_EXIT
+                        print(f"[DEBUG] current position is: {current_position}")
+                        print(f"[DEBUG] state just changed, current state is {state}")
 
         elif state == STATE_WAITING_EXIT:
             if current_position and now > current_position['funding_time'].timestamp():
                 print(f"[MAIN] Exiting position for {current_position['symbol']}")
+                print(f"[DEBUG] current position is: {current_position}")
                 finished = manage_exit(bdata_handler, gdata_handler, bf_trader, gf_trader)
                 if finished:
                     state = STATE_WAITING_ENTRY
+                    print(f"[DEBUG] state just changed, current state is {state}")
 
         time.sleep(LOOP_INTERVAL)

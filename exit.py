@@ -7,78 +7,129 @@ from config import *
 
 from arbitrage import current_position
 
-# 判断资金费率差是否反转
-# def should_trigger_exit(symbol, trade_type, bdata_handler, gdata_handler, threshold=MONITOR_PROFIT_THRESHOLD):
-#     try:
-#         bin_fr = bdata_handler.get_funding_rate(symbol=symbol)
-#         gate_symbol = symbol.replace("USDT",'_USDT')
-#         gate_fr = gdata_handler.get_funding_rate(symbol=gate_symbol)
-#         fr_diff = float(gate_fr) - float(bin_fr)  # gate - binance
-#         print(f"[CHECK] {symbol} funding rate diff: {fr_diff} (gate: {gate_fr}, binance: {bin_fr})")
-#
-#         if trade_type == "type1":
-#             return fr_diff < threshold
-#         elif trade_type == "type2":
-#             return fr_diff > -threshold
-#         else:
-#             print("trade_type must be 'type1' or 'type2'")
-#             return False
-#
-#     except Exception as e:
-#         print(f"[ERROR] 获取资金费率失败 {symbol}: {e}")
-#         return False
-
-# 通过 gate 订单簿计算 binance 限价价并挂单
-def place_break_even_exit_orders(bdata_handler,gdata_handler, bf_trader, gf_trader):
+# 监控实时pnl，判断是否超过阈值，并下限价单平仓
+def wait_until_pnl_and_place_orders(bdata_handler, gdata_handler, bf_trader, gf_trader):
     global current_position
 
     symbol = current_position['symbol']
     gate_symbol = symbol.replace("USDT", "_USDT")
-    gate_orderbook = gdata_handler.get_gate_orderbook(symbol)
-
-    if not gate_orderbook:
-        print(f"[EXIT] 无法获取 Gate orderbook: {symbol}")
-        return False
-
-    bi_entry = float(current_position['bi_entry_price'])
-    gate_entry = float(current_position['gate_entry_price'])
-    direction = current_position['trade_type']
+    trade_type = current_position['trade_type']
+    gate_entry_price = float(current_position['gate_entry_price'])
+    bi_entry_price = float(current_position['bi_entry_price'])
     bi_qty = current_position['bi_qty']
-    bi_tick_size = bdata_handler.bi_get_contract_info(symbol)['tick_size']
 
-    if direction == 'type1': # type1: gate 平空、binance 平多，gate用ask1
-        gate_exit_price = float(gate_orderbook['asks'][0][0])
-        break_even_price = bi_entry - gate_entry + gate_exit_price
-        round_price = round(break_even_price/bi_tick_size) * bi_tick_size
-        gate_order = gf_trader.close_future_limit_order(gate_symbol, price=gate_exit_price, direction='short')
-        bi_order = bf_trader.close_limit_long_order(symbol, quantity=bi_qty, price=round_price)
-        print(f"[DEBUG] Gate order: {gate_order}")
-        print(f"[DEBUG] Binance order: {bi_order}")
-        print(f"[EXIT] {symbol} 限价平仓单已下: Gate={gate_exit_price}, Binance={round_price}")
-        if gate_order and bi_order:
-            print(f"[EXIT] 平仓限价单已下达 {symbol}")
-            current_position['exit_time'] = time.time()
-            current_position['gate_order_id'] = gate_order.id
-            current_position['bin_order_id'] = bi_order['orderId']
-            return True
+    print(f"[MONITOR] 开始监控 {symbol} 实时 PnL")
 
-    elif direction == 'type2': # type2: gate 平多、binance 平空，gate用bid1
-        gate_exit_price = float(gate_orderbook['bids'][0][0])
-        break_even_price = bi_entry + gate_exit_price - gate_entry
-        round_price = round(break_even_price / bi_tick_size) * bi_tick_size
-        gate_order = gf_trader.close_future_limit_order(gate_symbol, price=gate_exit_price, direction='long')
-        bi_order = bf_trader.close_limit_short_order(symbol, quantity=bi_qty, price=round_price)
-        print(f"[DEBUG] Gate order: {gate_order}")
-        print(f"[DEBUG] Binance order: {bi_order}")
-        print(f"[EXIT] {symbol} 限价平仓单已下: Gate={gate_exit_price}, Binance={round_price}")
-        if gate_order and bi_order:
-            print(f"[EXIT] 平仓限价单已下达 {symbol}")
-            current_position['exit_time'] = time.time()
-            current_position['gate_order_id'] = gate_order.id
-            current_position['bin_order_id'] = bi_order['orderId']
-            return True
+    while True:
+        gate_orderbook = gdata_handler.get_gate_orderbook(symbol)
+        bi_orderbook = bdata_handler.get_binance_orderbook(symbol)
 
-    return False
+        if not gate_orderbook or not bi_orderbook:
+            print("[MONITOR] 无法获取 orderbook，等待后重试...")
+            time.sleep(3)
+            continue
+
+        normalized_pnl = ArbitrageUtils.calculate_worst_case_pnl(
+            entry_price_gate=gate_entry_price,
+            entry_price_binance=bi_entry_price,
+            trade_type=trade_type,
+            orderbook_gate=gate_orderbook,
+            orderbook_binance=bi_orderbook
+        )
+        print(f"[MONITOR] 当前 worst-case PnL: {normalized_pnl:.6f}")
+
+        if normalized_pnl >= MONITOR_PROFIT_THRESHOLD:
+            print(f"[MONITOR] 达到平仓阈值 {normalized_pnl:.6f}，准备下限价单")
+
+            gate_exit_price = float(gate_orderbook['asks'][0][0]) if trade_type == 'type1' else float(gate_orderbook['bids'][0][0])
+            binance_exit_price = float(bi_orderbook['bids'][0][0]) if trade_type == 'type1' else float(bi_orderbook['asks'][0][0])
+
+            try:
+                if trade_type == 'type1':
+                    gate_order = gf_trader.close_future_limit_order(gate_symbol, price=gate_exit_price, direction='short')
+                    bi_order = bf_trader.close_limit_long_order(symbol, quantity=bi_qty, price=binance_exit_price)
+                    print(f"[DEBUG] Gate order: {gate_order}")
+                    print(f"[DEBUG] Binance order: {bi_order}")
+                    print(f"[EXIT] {symbol} 限价平仓单已下: Gate={gate_exit_price}, Binance={binance_exit_price}")
+                    if gate_order and bi_order:
+                        print(f"[EXIT] 平仓限价单已下达 {symbol}")
+                        current_position['exit_time'] = time.time()
+                        current_position['gate_order_id'] = gate_order.id
+                        current_position['bin_order_id'] = bi_order['orderId']
+                        return True
+
+                elif trade_type == 'type2':
+                    gate_order = gf_trader.close_future_limit_order(gate_symbol, price=gate_exit_price, direction='long')
+                    bi_order = bf_trader.close_limit_short_order(symbol, quantity=bi_qty, price=binance_exit_price)
+                    print(f"[DEBUG] Gate order: {gate_order}")
+                    print(f"[DEBUG] Binance order: {bi_order}")
+                    print(f"[EXIT] {symbol} 限价平仓单已下: Gate={gate_exit_price}, Binance={binance_exit_price}")
+                    if gate_order and bi_order:
+                        print(f"[EXIT] 平仓限价单已下达 {symbol}")
+                        current_position['exit_time'] = time.time()
+                        current_position['gate_order_id'] = gate_order.id
+                        current_position['bin_order_id'] = bi_order['orderId']
+                        return True
+
+            except Exception as e:
+                print(f"❌ Error placing limit close order: {e}")
+                return False
+
+        time.sleep(3)
+
+# 通过 gate 订单簿计算 binance 限价价并挂单
+# def place_break_even_exit_orders(bdata_handler,gdata_handler, bf_trader, gf_trader):
+#     global current_position
+#
+#     symbol = current_position['symbol']
+#     gate_symbol = symbol.replace("USDT", "_USDT")
+#     gate_orderbook = gdata_handler.get_gate_orderbook(symbol)
+#     bi_orderbook = bdata_handler.get_binance_orderbook(symbol)
+#
+#     if not gate_orderbook:
+#         print(f"[EXIT] 无法获取 Gate orderbook: {symbol}")
+#         return False
+#
+#     bi_entry = float(current_position['bi_entry_price'])
+#     gate_entry = float(current_position['gate_entry_price'])
+#     direction = current_position['trade_type']
+#     bi_qty = current_position['bi_qty']
+#     bi_tick_size = bdata_handler.bi_get_contract_info(symbol)['tick_size']
+#
+#     if direction == 'type1': # type1: gate 平空、binance 平多，先用gate_orderbook平gate用ask1
+#         gate_exit_price = float(gate_orderbook['asks'][0][0])
+#         break_even_price = bi_entry - gate_entry + gate_exit_price
+#         round_price = ArbitrageUtils.adjust_price_to_tick(break_even_price, bi_tick_size)
+#         gate_order = gf_trader.close_future_limit_order(gate_symbol, price=gate_exit_price, direction='short')
+#         bi_order = bf_trader.close_limit_long_order(symbol, quantity=bi_qty, price=round_price)
+#         print(f"[DEBUG] Gate order: {gate_order}")
+#         print(f"[DEBUG] Binance order: {bi_order}")
+#         print(f"[EXIT] {symbol} 限价平仓单已下: Gate={gate_exit_price}, Binance={round_price}")
+#         if gate_order and bi_order:
+#             print(f"[EXIT] 平仓限价单已下达 {symbol}")
+#             current_position['exit_time'] = time.time()
+#             current_position['gate_order_id'] = gate_order.id
+#             current_position['bin_order_id'] = bi_order['orderId']
+#             return True
+#
+#     elif direction == 'type2': # type2: gate 平多、binance 平空，先用bi_orderbook平binance用ask1
+#         bi_exit_price = float(bi_orderbook['asks'][0][0])
+#         # gate_exit_price = float(gate_orderbook['bids'][0][0])
+#         break_even_price = - bi_entry + bi_exit_price + gate_entry
+#         round_price = ArbitrageUtils.adjust_price_to_tick(break_even_price, bi_tick_size)
+#         gate_order = gf_trader.close_future_limit_order(gate_symbol, price=round_price, direction='long')
+#         bi_order = bf_trader.close_limit_short_order(symbol, quantity=bi_qty, price=bi_exit_price)
+#         print(f"[DEBUG] Gate order: {gate_order}")
+#         print(f"[DEBUG] Binance order: {bi_order}")
+#         print(f"[EXIT] {symbol} 限价平仓单已下: Gate={round_price}, Binance={bi_exit_price}")
+#         if gate_order and bi_order:
+#             print(f"[EXIT] 平仓限价单已下达 {symbol}")
+#             current_position['exit_time'] = time.time()
+#             current_position['gate_order_id'] = gate_order.id
+#             current_position['bin_order_id'] = bi_order['orderId']
+#             return True
+#
+#     return False
 
 # 超时未成交强制市价平
 def force_market_exit(bf_trader, gf_trader):
@@ -87,7 +138,7 @@ def force_market_exit(bf_trader, gf_trader):
     symbol = current_position['symbol']
     gate_symbol = symbol.replace("USDT", "_USDT")
     trade_type = current_position['trade_type']
-    bi_qty = current_position['bi_qtr']
+    bi_qty = current_position['bi_qty']
 
     gate_exit_order_id = current_position['gate_order_id']
     bi_exit_order_id = current_position['bin_order_id']
@@ -98,7 +149,7 @@ def force_market_exit(bf_trader, gf_trader):
 
         if gate_filled and bin_filled:
             print(f"[FORCE] {symbol} 限价单已全部成交，无需强平")
-            return
+            return True
 
         print(f"[FORCE] {symbol} 超时未完成，执行强制市价平仓")
 
@@ -112,11 +163,14 @@ def force_market_exit(bf_trader, gf_trader):
 
         if not bin_filled:
             print(f"[FORCE] {symbol} Binance 限价未成交，取消并市价平仓")
-            bf_trader.cancel_binance_order(symbol, bi_exit_order_id)
+            bf_trader.cancel_futures_limit_order(symbol, bi_exit_order_id)
             if trade_type == 'type1':
                 bf_trader.close_market_long_order(symbol, bi_qty)
             elif trade_type == 'type2':
                 bf_trader.close_market_short_order(symbol, bi_qty)
+
+        current_position.clear()
+        return True
 
     except Exception as e:
         print(f"[FORCE] 强制市价平仓失败 {symbol}: {e}")
@@ -125,36 +179,45 @@ def force_market_exit(bf_trader, gf_trader):
 def manage_exit(bdata_handler, gdata_handler, bf_trader, gf_trader):
     global current_position
 
+    print(f"[MANAGE] Start manage_exit loop...")
+
     symbol = current_position['symbol']
     funding_time = current_position['funding_time']
     now = time.time()
-    if now < funding_time.timestamp():
+    if now < funding_time.timestamp() + 20:
         print(f"[WAIT] 资金费率未发放，暂不平仓 {symbol}")
         return False
 
-    print(f"[MANAGE] 尝试限价平仓 {symbol}")
-    success = place_break_even_exit_orders(bdata_handler, gdata_handler, bf_trader, gf_trader)
+    print(f"[MANAGE] 资金费率已发放尝试限价平仓 {symbol}")
+    success = wait_until_pnl_and_place_orders(bdata_handler, gdata_handler, bf_trader, gf_trader)
     if not success:
         print(f"[MANAGE] {symbol} 限价下单失败")
         return False
 
+    print(f"[MANAGE] 开始监控限价单是否成功平仓 {symbol}")
     timeout_start = time.time()
     while time.time() - timeout_start <= MONITOR_EXIT_TIMEOUT:
         try:
             gate_filled = gf_trader.check_order_filled(current_position['gate_order_id'])
             bin_filled = bf_trader.check_order_filled(symbol, current_position['bin_order_id'])
+            print(f'[MANAGE] Binance status is {bin_filled}, and Gate status is {gate_filled}')
             if gate_filled and bin_filled:
                 print(f"[MANAGE] {symbol} 平仓完成")
+                current_position.clear()
                 return True
             else:
-                time.sleep(60)
+                time.sleep(MONITOR_FILL_INTERVAL)
         except Exception as e:
             print(f"[MANAGE] 查询成交状态失败 {symbol}: {e}")
-            break
+            # break
+            time.sleep(MONITOR_FILL_INTERVAL)
 
     print(f"[MANAGE] {symbol} 超时未成交，执行强制平仓")
-    force_market_exit(bf_trader, gf_trader)
-    return True
+    forced_exit = force_market_exit(bf_trader, gf_trader)
+    if forced_exit:
+        print(f"[MANAGE] {symbol} 强制市价平仓完成")
+        current_position.clear()
+        return True
 
 
 if __name__ == '__main__':
@@ -167,13 +230,13 @@ if __name__ == '__main__':
     gdata_handler = GateDataHandler()
 
     from arbitrage import current_position
-
-    active_type1, active_type2 = reinitialize_active_positions(bf_trader, gf_trader)
-    print(active_type1, active_type2)
-
+    #
+    # active_type1, active_type2 = reinitialize_active_positions(bf_trader, gf_trader)
+    # print(active_type1, active_type2)
+    #
     # current_position.update({
-    #     'symbol': 'LPTUSDT',
-    #     **active_type2['LPTUSDT']
+    #     'symbol': 'ALPACAUSDT',
+    #     **active_type2['ALPACAUSDT']
     # })
     #
     # manage_exit(bdata_handler, gdata_handler, bf_trader, gf_trader)

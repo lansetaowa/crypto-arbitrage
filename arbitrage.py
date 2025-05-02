@@ -76,8 +76,8 @@ def open_new_position(symbol, fr_diff, next_funding_time, bdata_handler, gdata_h
         return False
 
     # 设置杠杆为1
-    gf_trader.set_leverage(gate_symbol, leverage=1)
-    bf_trader.set_leverage(symbol, leverage=1)
+    gf_trader.set_leverage(gate_symbol, leverage=LEVERAGE)
+    bf_trader.set_leverage(symbol, leverage=LEVERAGE)
 
     # 计算qty/size
     gate_size, bi_quantity = ArbitrageUtils.calculate_trade_quantity(
@@ -110,7 +110,8 @@ def open_new_position(symbol, fr_diff, next_funding_time, bdata_handler, gdata_h
         bi_entry_price = bf_trader.check_fill_price(symbol=symbol, order_id=bi_order['orderId'])
         print(f"[ENTRY] 开仓成功 {symbol}, type={trade_type}, fr_diff={fr_diff}")
         logging.info(f"[ENTRY] 开仓成功 {symbol} | Gate价格={gate_order.fill_price}, Binance价格={bi_entry_price}, type={trade_type}")
-        current_position = {
+        current_position.clear()
+        current_position.update({
             'symbol': symbol,
             'trade_type': trade_type,
             'gate_size': gate_size,
@@ -118,7 +119,7 @@ def open_new_position(symbol, fr_diff, next_funding_time, bdata_handler, gdata_h
             'gate_entry_price': float(gate_order.fill_price),
             'bi_entry_price': float(bi_entry_price),
             'funding_time': next_funding_time
-        }
+        })
         return True
 
     else:
