@@ -147,6 +147,16 @@ class BinanceDataHandler:
             print(f"❌ Error fetching Binance orderbook: {e}")
             return None
 
+    # 获取最近5分钟内的lowest low
+    def get_last_n_minutes_low(self, symbol, minutes=5):
+        try:
+            klines = self.client.futures_klines(symbol=symbol, interval='1m', limit=minutes)
+            lows = [float(k[3]) for k in klines]  # k[3] 是 low
+            return min(lows) if lows else None
+        except Exception as e:
+            print(f"❌ 获取 Binance 过去 {minutes} 分钟最低价失败: {e}")
+            return None
+
 
 class GateDataHandler:
 
@@ -227,6 +237,22 @@ class GateDataHandler:
             }
         except Exception as e:
             print(f"❌ Error fetching Gate.io orderbook: {e}")
+            return None
+
+    # 获取最近5分钟内的lowest low
+    def get_last_n_minutes_low(self, symbol, minutes=5):
+        try:
+            gate_symbol = symbol.replace("USDT", "_USDT")
+            klines = self.futures_api.list_futures_candlesticks(
+                settle='usdt',
+                contract=gate_symbol,
+                interval='1m',
+                limit=minutes
+            )
+            lows = [float(k.l) for k in klines]
+            return min(lows) if lows else None
+        except Exception as e:
+            print(f"❌ 获取 Gate 过去 {minutes} 分钟最低价失败: {e}")
             return None
 
 class ArbitrageUtils:
@@ -426,17 +452,23 @@ if __name__ == '__main__':
     bdata_handler = BinanceDataHandler()
     gdata_handler = GateDataHandler()
 
-    gate_df = gdata_handler.gate_get_funding_rates()
-    print(gate_df.tail())
-    print(gate_df.head())
+    low = bdata_handler.get_last_n_minutes_low(symbol='BTCUSDT')
+    print(low)
 
-    bi_df = bdata_handler.bi_get_funding_rates()
-    print(bi_df.tail())
-    print(bi_df.head())
-
-    merge_df = ArbitrageUtils.merge_funding_rates(bi_df, gate_df)
-    print(merge_df.head())
-    print(merge_df.tail())
+    low_gate = gdata_handler.get_last_n_minutes_low(symbol='BTCUSDT')
+    print(low_gate)
+    #
+    # gate_df = gdata_handler.gate_get_funding_rates()
+    # print(gate_df.tail())
+    # print(gate_df.head())
+    #
+    # bi_df = bdata_handler.bi_get_funding_rates()
+    # print(bi_df.tail())
+    # print(bi_df.head())
+    #
+    # merge_df = ArbitrageUtils.merge_funding_rates(bi_df, gate_df)
+    # print(merge_df.head())
+    # print(merge_df.tail())
 
     # ob = bdata_handler.get_binance_orderbook('BTCUSDT')
     # print(ob)

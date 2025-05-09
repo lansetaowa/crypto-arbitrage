@@ -16,6 +16,11 @@ load_dotenv('proxy.env')
 BINANCE_PROXY = os.getenv('BINANCE_PROXY')
 GATE_PROXY = os.getenv('GATE_PROXY')
 
+# load Telegram bot token
+load_dotenv('telegram_bot.env')
+arbi_alarm = os.getenv("ArbiAlarmBot")
+tele_chatid = os.getenv("chat_id")
+
 THRESHOLD = 0.0005  # 套利阈值
 TRADE_AMOUNT = 20  # 单边交易金额
 LEVERAGE = 1  # 杠杆倍数
