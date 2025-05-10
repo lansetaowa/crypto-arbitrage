@@ -156,6 +156,26 @@ class BFutureTrader:
             print(f"❌ Error placing limit close long order on Binance: {e}")
             return None
 
+    # 限价单，平多，带止损价
+    # 先用close_limit_long_order设置平仓价，再用以下方法设置止损
+    def setup_long_order_stop_loss(self, symbol, quantity, stop_price):
+        try:
+            order = self.client.futures_create_order(
+                symbol=symbol,
+                side='SELL',
+                positionSide='LONG',
+                type='STOP_MARKET',
+                stopPrice=str(stop_price),
+                closePosition=False,
+                timeInForce='GTC',
+                quantity=quantity,
+                workingType='MARK_PRICE'  # 或 'CONTRACT_PRICE'
+            )
+            return order
+        except Exception as e:
+            print(f"❌ Error placing stop-limit close long order on Binance: {e}")
+            return None
+
     # 限价单，平空
     def close_limit_short_order(self, symbol, quantity, price):
         try:
@@ -352,6 +372,44 @@ class GateFuturesTrader:
             print(f"❌ 平多市价单时出错: {e}")
             return None
 
+    # 设置止损
+    # 先用close_future_limit_order来设置限价平仓的单，再用以下方法设置止损
+    def close_future_stop_loss_order(self, symbol, trigger_price, order_price, direction):
+        """
+        提交 Gate 止损平仓触发订单（价格触发），支持市价或限价
+        :param symbol: 例如 'BTC_USDT'
+        :param trigger_price: 触发价（例如 entry_price * 0.7）
+        :param order_price: 成交价；设为 '0' 代表市价
+        :param direction: 'long' 或 'short'，用以确定 order_type 与 auto_size
+        """
+        try:
+            rule = 2 if direction == 'long' else 1  # long: 小于等于触发；short: 大于等于触发
+
+            order = self.futures_api.create_price_triggered_order(
+                settle="usdt",
+                futures_price_triggered_order={
+                    "initial": {
+                        "contract": symbol,
+                        "size": 0,  # 全部平仓
+                        "price": str(order_price),  # 设为 "0" 表示市价
+                        "tif": "ioc",  # 市价必须为 ioc
+                        "reduce_only": True,
+                        "auto_size": "close_long" if direction == 'long' else "close_short",
+                        "text": "t-api_stoploss"
+                    },
+                    "trigger": {
+                        "strategy_type": 0,  # 价格触发
+                        "price_type": 1,  # 标记价格
+                        "price": str(trigger_price),
+                        "rule": rule,
+                    }
+                }
+            )
+            return order
+        except ApiException as e:
+            print(f"❌ 创建 Gate 止损订单失败: {e}")
+            return None
+
     # cancel an unfilled limit order
     def cancel_futures_order(self, order_id):
         try:
@@ -363,6 +421,11 @@ class GateFuturesTrader:
 if __name__ == '__main__':
 
     bfuture_trader = BFutureTrader()
+
+    # long_order = bfuture_trader.place_market_long_order(symbol='ADAUSDT', quantity=20)
+    # close_long_limit_sl = bfuture_trader.setup_long_order_stop_loss(symbol='ADAUSDT',
+    #                                                                       quantity=20,
+    #                                                                       stop_price=0.56)
 
     # trades = bfuture_trader.client.futures_account_trades(symbol='ALPACAUSDT', limit=10)
     # print(trades)
@@ -395,6 +458,11 @@ if __name__ == '__main__':
 
     gfuture_trader = GateFuturesTrader()
 
+    # future_stop_loss = gfuture_trader.close_future_stop_loss_order(symbol='ADA_USDT',
+    #                                                                trigger_price=0.56,
+    #                                                                order_price=0,
+    #                                                                direction='long')
+
     # gfuture_trader.close_future_limit_order(symbol='ADA_USDT', price=0.8, direction='long')
     # gfuture_trader.close_future_limit_order(symbol='NKN_USDT', price=0.04374, direction='short')
 
@@ -415,7 +483,7 @@ if __name__ == '__main__':
     # print(gfuture_trader.check_order_filled(order_id='5066550085564938'))
 
     # #
-    # gfuture_trader.place_future_market_order('ETH_USDT', size=-1)
+    # gfuture_trader.place_future_market_order('ADA_USDT', size=2)
     #
     # gate_positions = gfuture_trader.futures_api.list_positions(settle='usdt')
     # # print(gate_positions)
