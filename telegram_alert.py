@@ -1,9 +1,7 @@
-import asyncio
 from telegram import Bot
 import requests
 
 from config import arbi_alarm, tele_chatid
-from data import BinanceDataHandler, GateDataHandler, ArbitrageUtils
 
 TELEGRAM_BOT_TOKEN = arbi_alarm
 TELEGRAM_CHAT_ID = tele_chatid
