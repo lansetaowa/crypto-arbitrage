@@ -29,8 +29,10 @@ TIME_BUFFER = 90 # 里资金费率生效时间还剩多久开始套利流程
 LOOP_INTERVAL = 120 # 无套利机会时的等待时间（秒）
 
 MONITOR_PROFIT_THRESHOLD = 0.0005 # pnl判断平仓的阈值
-MONITOR_EXIT_TIMEOUT = 5*60 # 平仓的限价单多久没有fill就强制平仓
+# MONITOR_EXIT_TIMEOUT = 5*60 # 平仓的限价单多久没有fill就强制平仓
 MONITOR_FILL_INTERVAL = 25
+
+STOP_LOSS = 0.7
 
 
 # # 添加 interval mismatch symbols 列表
