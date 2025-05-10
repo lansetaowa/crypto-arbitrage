@@ -410,6 +410,15 @@ class GateFuturesTrader:
             print(f"❌ 创建 Gate 止损订单失败: {e}")
             return None
 
+    # 查询条件订单的状态是否被fill
+    def check_price_order_filled(self, order_id):
+        try:
+            order = self.futures_api.get_price_triggered_order(settle='usdt', order_id=str(order_id))
+            return order.status == 'finished'
+        except ApiException as e:
+            print(f"❌ 查询Gate价格触发订单状态失败: {e}")
+            return False
+
     # cancel an unfilled limit order
     def cancel_futures_order(self, order_id):
         try:
@@ -480,7 +489,9 @@ if __name__ == '__main__':
     # print('short order ----------')
     # print(short_order)
 
-    # print(gfuture_trader.check_order_filled(order_id='5066550085564938'))
+    # print(gfuture_trader.futures_api.get_price_triggered_order(settle='usdt', order_id='1920947595069362176'))
+
+    # print(gfuture_trader.check_price_order_filled(order_id='1920947595069362176'))
 
     # #
     # gfuture_trader.place_future_market_order('ADA_USDT', size=2)
